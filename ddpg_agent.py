@@ -84,7 +84,8 @@ class DDPGAgent:
         # 1) get sample from the replay buffer
         states, actions, rewards, next_states, dones = experiences
         
-        # 2) Compute target q_vals
+        # 2) Compute target and expected Q values
+        
         mask_done = (1-dones).view(-1,1)
         actions_next = self.target_actor(next_states)
         
@@ -92,28 +93,26 @@ class DDPGAgent:
             actions_next = torch.cat((actions_next, actions[:,2:].float()), dim=1)
         else:
             actions_next = torch.cat((actions[:,:2].float(), actions_next), dim=1)
-        
-        # self.target_actor.train()
         state_action_next = torch.cat((next_states, actions_next.float()),1)
         q_vals_next = self.target_critic(state_action_next)
         q_vals_next = rewards + GAMMA * mask_done * q_vals_next
         q_vals_next = q_vals_next.detach()
         
-        # critic loss
+        # 3) critic loss function
+        
         state_action_vec = torch.cat((states, actions.float()),1)
         q_vals = self.critic(state_action_vec)
         critic_loss = F.mse_loss(q_vals, q_vals_next)
         
-        # 3) Gradient descent on target and Q
-        # backward descent by default
+        # 4) Gradient descent on target and Q
+        # backward pass is descent by default
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
         self.critic_optimizer.step()
         
-        # 4) Gradient ascent on the policy loss
+        # 5) Gradient ascent on the policy
+        
         q_actions = self.actor(states)
-        
-        
         if agent_id == 0:
             q_actions = torch.cat((q_actions, actions[:,2:].float()), dim=1)
         else:
@@ -122,15 +121,16 @@ class DDPGAgent:
         sa_actor_vec = torch.cat((states, q_actions),1)
         actor_loss = -self.critic(sa_actor_vec).mean()
         
+        # 6) optimize actor
         self.actor_optimizer.zero_grad()
         actor_loss.backward()
         self.actor_optimizer.step()
         
-        # 5) update both the networks
+        # 7) update both the networks
         self.soft_update(self.actor, self.target_actor, TAU) 
         self.soft_update(self.critic, self.target_critic, TAU)
         
-        # Update noise value
+        # 8) Update noise value
         self.eps = self.eps - (1/eps_decay)
         if self.eps < eps_end:
             self.eps=eps_end
