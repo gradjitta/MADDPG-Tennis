@@ -29,4 +29,8 @@ The file structure
 `ddpg_train_agents` function in the `Solution.ipynb`  notebook does the required training that generates the solved_checkpoint_0.pth and solved_checkpoint_1.pth files
 
 
+## Trained agent behavior
+
+![](./assets/solved_tennis.gif)
+
 
