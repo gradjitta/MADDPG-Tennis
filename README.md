@@ -14,6 +14,8 @@ In this environment, two agents control rackets to bounce a ball over a net. If 
 
 The observation space consists of 8 variables corresponding to the position and velocity of the ball and racket. Two continuous actions are available, corresponding to movement toward (or away from) the net, and jumping. 
 
+The task is considered solved when the average reward of the winning agent each episode hits 0.5 over 100 consecutive episodes.
+
 ### Instructions
 
 The file structure
